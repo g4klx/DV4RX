@@ -20,6 +20,12 @@
 #include "Utils.h"
 #include "Log.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 CDV4mini::CDV4mini(const std::string& port, unsigned int frequency) :
 m_serial(port, SERIAL_115200),
 m_frequency(frequency)

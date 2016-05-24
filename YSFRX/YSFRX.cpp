@@ -26,6 +26,12 @@
 #include "YSFPayload.h"
 #include "YSFFICH.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
