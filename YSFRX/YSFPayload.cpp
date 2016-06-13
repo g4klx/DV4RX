@@ -459,6 +459,50 @@ bool CYSFPayload::processDataFRModeData(unsigned char* data, unsigned char fn)
 		default:
 			break;
 		}
+	} else {
+		switch (fn) {
+		case 0U:
+			LogMessage("Data FR Mode, invalid CSD1");
+			break;
+
+		case 1U:
+			LogMessage("Data FR Mode, invalid CSD3");
+			break;
+
+		case 2U:
+			LogMessage("Data FR Mode, invalid DT2");
+			break;
+
+		case 3U:
+			LogMessage("Data FR Mode, invalid DT4");
+			break;
+
+		case 4U:
+			LogMessage("Data FR Mode, invalid DT6");
+			break;
+
+		case 5U:
+			LogMessage("Data FR Mode, invalid DT8");
+			break;
+
+		case 6U:
+			LogMessage("Data FR Mode, invalid DT10");
+			break;
+
+		case 7U:
+			LogMessage("Data FR Mode, invalid DT12");
+			break;
+
+		default:
+			LogMessage("Data FR Mode, invalid data");
+			break;
+		}
+
+		CUtils::dump(2U, "DCH", dch, 45U);
+		CUtils::dump(2U, "After FEC", output, 22U);
+		for (unsigned int i = 0U; i < 20U; i++)
+			output[i] ^= WHITENING_DATA[i];
+		CUtils::dump(2U, "After Whitening", output, 20U);
 	}
 
 	p1 = data + 9U;
@@ -523,6 +567,50 @@ bool CYSFPayload::processDataFRModeData(unsigned char* data, unsigned char fn)
 		default:
 			break;
 		}
+	} else {
+		switch (fn) {
+		case 0U:
+			LogMessage("Data FR Mode, invalid CSD2");
+			break;
+
+		case 1U:
+			LogMessage("Data FR Mode, invalid DT1");
+			break;
+
+		case 2U:
+			LogMessage("Data FR Mode, invalid DT3");
+			break;
+
+		case 3U:
+			LogMessage("Data FR Mode, invalid DT5");
+			break;
+
+		case 4U:
+			LogMessage("Data FR Mode, invalid DT7");
+			break;
+
+		case 5U:
+			LogMessage("Data FR Mode, invalid DT9");
+			break;
+
+		case 6U:
+			LogMessage("Data FR Mode, invalid DT11");
+			break;
+
+		case 7U:
+			LogMessage("Data FR Mode, invalid DT13");
+			break;
+
+		default:
+			LogMessage("Data FR Mode, invalid data");
+			break;
+		}
+
+		CUtils::dump(2U, "DCH", dch, 45U);
+		CUtils::dump(2U, "After FEC", output, 22U);
+		for (unsigned int i = 0U; i < 20U; i++)
+			output[i] ^= WHITENING_DATA[i];
+		CUtils::dump(2U, "After Whitening", output, 20U);
 	}
 
 	return ret1 && (fn == 0U);
