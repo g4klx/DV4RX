@@ -19,6 +19,7 @@
 #include "DMRRX.h"
 #include "Version.h"
 #include "DMRDataHeader.h"
+#include "DMRShortLC.h"
 #include "DMRSlotType.h"
 #include "DMRFullLC.h"
 #include "Hamming.h"
@@ -39,7 +40,10 @@
 #include <cstdlib>
 #include <cstring>
 
-const unsigned char BIT_MASK_TABLE[] = { 0x80U, 0x40U, 0x20U, 0x10U, 0x08U, 0x04U, 0x02U, 0x01U };
+const unsigned int CACH_INTERLEAVE[] =
+	{1U, 2U, 3U, 5U, 6U, 7U, 9U, 10U, 11U, 13U, 15U, 16U, 17U, 19U, 20U, 21U, 23U};
+
+const unsigned char BIT_MASK_TABLE[] = {0x80U, 0x40U, 0x20U, 0x10U, 0x08U, 0x04U, 0x02U, 0x01U};
 
 #define WRITE_BIT(p,i,b) p[(i)>>3] = (b) ? (p[(i)>>3] | BIT_MASK_TABLE[(i)&7]) : (p[(i)>>3] & ~BIT_MASK_TABLE[(i)&7])
 #define READ_BIT(p,i)    (p[(i)>>3] & BIT_MASK_TABLE[(i)&7])
@@ -80,16 +84,21 @@ m_frequency(frequency),
 m_bits(0U),
 m_count(0U),
 m_pos(0U),
+m_slotNo(1U),
 m_type(SYNC_NONE),
 m_receiving(false),
-m_buffer(NULL)
+m_buffer(NULL),
+m_shortN(0U),
+m_shortLC(NULL)
 {
-	m_buffer = new unsigned char[DMR_FRAME_LENGTH_BYTES];
+	m_buffer  = new unsigned char[DMR_FRAME_LENGTH_BYTES];
+	m_shortLC = new unsigned char[9U];
 }
 
 CDMRRX::~CDMRRX()
 {
 	delete[] m_buffer;
+	delete[] m_shortLC;
 }
 
 void CDMRRX::run()
@@ -175,7 +184,7 @@ void CDMRRX::processBit(bool b)
 
 		switch (m_type) {
 		case SYNC_AUDIO:
-			LogMessage("[Audio Sync]");
+			LogMessage("%u [Audio Sync]", m_slotNo);
 			break;
 		case SYNC_DATA:
 			processDataSync(m_buffer);
@@ -207,47 +216,47 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 
 	unsigned char type = slotType.getDataType();
 	if (type == DT_IDLE) {
-		LogMessage("[Data Sync] [IDLE]");
+		LogMessage("%u [Data Sync] [IDLE]", m_slotNo);
 	} else if (type == DT_VOICE_LC_HEADER) {
 		CDMRFullLC fullLC;
 		CDMRLC* lc = fullLC.decode(buffer, type);
 		if (lc != NULL) {
-			LogMessage("[Data Sync] [VOICE_LC_HEADER] src=%u dest=%s%u", lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
+			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] src=%u dest=%s%u", m_slotNo, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		} else {
-			LogMessage("[Data Sync] [VOICE_LC_HEADER] invalid");
+			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] invalid", m_slotNo);
 		}
 	} else if (type == DT_TERMINATOR_WITH_LC) {
 		CDMRFullLC fullLC;
 		CDMRLC* lc = fullLC.decode(buffer, type);
 		if (lc != NULL) {
-			LogMessage("[Data Sync] [DT_TERMINATOR_WITH_LC] src=%u dest=%s%u", lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
+			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] src=%u dest=%s%u", m_slotNo, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		} else {
-			LogMessage("[Data Sync] [DT_TERMINATOR_WITH_LC] invalid");
+			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] invalid", m_slotNo);
 		}
 	} else if (type == DT_VOICE_PI_HEADER) {
-		LogMessage("[Data Sync] [VOICE_PI_HEADER]");
+		LogMessage("%u [Data Sync] [VOICE_PI_HEADER]", m_slotNo);
 	} else if (type == DT_DATA_HEADER) {
 		CDMRDataHeader header;
 		bool valid = header.put(buffer);
 		if (valid) {
-			LogMessage("[Data Sync] [DATA_HEADER] src=%u dest=%s%u", header.getSrcId(), header.getGI() ? "TG" : "", header.getDstId());
+			LogMessage("%u [Data Sync] [DATA_HEADER] src=%u dest=%s%u", m_slotNo, header.getSrcId(), header.getGI() ? "TG" : "", header.getDstId());
 		} else {
-			LogMessage("[Data Sync] [DATA_HEADER] invalid");
+			LogMessage("%u [Data Sync] [DATA_HEADER] invalid", m_slotNo);
 		}
 	} else if (type == DT_RATE_12_DATA || type == DT_RATE_34_DATA || type == DT_RATE_1_DATA) {
-		LogMessage("[Data Sync] [DATA]");
+		LogMessage("%u [Data Sync] [DATA]", m_slotNo);
 	} else if (type == DT_CSBK) {
 		CDMRCSBK csbk;
 		bool valid = csbk.put(buffer);
 		if (valid) {
-			LogMessage("[Data Sync] [CSBK] src=%u dest=%s%u", csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
+			LogMessage("%u [Data Sync] [CSBK] src=%u dest=%s%u", m_slotNo, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
 		} else {
-			LogMessage("[Data Sync] [CSBK] invalid");
+			LogMessage("%u [Data Sync] [CSBK] invalid", m_slotNo);
 		}
 	} else {
-		LogMessage("[Data Sync] [UNKNOWN] type=%u", type);
+		LogMessage("%u [Data Sync] [UNKNOWN] type=%u", m_slotNo, type);
 	}
 }
 
@@ -267,5 +276,33 @@ void CDMRRX::processCACH(const unsigned char* buffer)
 
 	CHamming::decode743(word);
 
-	LogMessage("[CACH] AT=%d TC=%d LCSS=%d%d", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0);
+	if (!word[2U] && word[3U])
+		m_shortN = 0U;
+	else if (word[2U] && !word[3U])
+		m_shortN = 3U;
+
+	for (unsigned int i = 0U; i < 17U; i++) {
+		unsigned int m = CACH_INTERLEAVE[i];
+		bool b = READ_BIT(buffer, m) != 0x00U;
+
+		unsigned int n = i + (m_shortN * 17U);
+		WRITE_BIT(m_shortLC, n, b);
+	}
+
+	if (word[2U] && !word[3U]) {
+		unsigned char lc[5U];
+
+		CDMRShortLC shortLC;
+		shortLC.decode(m_shortLC, lc);
+
+		LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d LC=%02X %02X %02X %02X %02X", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0, lc[0U], lc[1U], lc[2U], lc[3U], lc[4U]);
+	} else {
+		LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0);
+	}
+
+	m_shortN++;
+	if (m_shortN >= 4U)
+		m_shortN = 0U;
+
+	m_slotNo = word[1U] ? 2U : 1U;
 }

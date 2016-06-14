@@ -37,14 +37,17 @@ public:
 	void run();
 
 private:
-	std::string  m_port;
-	unsigned int m_frequency;
-	uint64_t     m_bits;
-	unsigned int m_count;
-	unsigned int m_pos;
-	SYNC_TYPE    m_type;
-	bool         m_receiving;
+	std::string    m_port;
+	unsigned int   m_frequency;
+	uint64_t       m_bits;
+	unsigned int   m_count;
+	unsigned int   m_pos;
+	unsigned int   m_slotNo;
+	SYNC_TYPE      m_type;
+	bool           m_receiving;
 	unsigned char* m_buffer;
+	unsigned int   m_shortN;
+	unsigned char* m_shortLC;
 
 	void decode(const unsigned char* data, unsigned int length);
 	void processBit(bool b);
