@@ -149,7 +149,7 @@ void CDMRRX::decode(const unsigned char* data, unsigned int length)
 
 		if (errs < 3U) {
 			m_count = 0U;
-			m_pos = 156U;
+			m_pos = 155U;
 			m_type = SYNC_DATA;
 			m_receiving = true;
 		}
@@ -164,7 +164,7 @@ void CDMRRX::decode(const unsigned char* data, unsigned int length)
 
 		if (errs < 3U) {
 			m_count = 0U;
-			m_pos = 156U;
+			m_pos = 155U;
 			m_type = SYNC_AUDIO;
 			m_receiving = true;
 		}
@@ -293,9 +293,12 @@ void CDMRRX::processCACH(const unsigned char* buffer)
 		unsigned char lc[5U];
 
 		CDMRShortLC shortLC;
-		shortLC.decode(m_shortLC, lc);
+		bool valid = shortLC.decode(m_shortLC, lc);
 
-		LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d LC=%02X %02X %02X %02X %02X", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0, lc[0U], lc[1U], lc[2U], lc[3U], lc[4U]);
+		if (valid)
+			LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d LC=%02X %02X %02X %02X %02X", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0, lc[0U], lc[1U], lc[2U], lc[3U], lc[4U]);
+		else
+			LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0);
 	} else {
 		LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0);
 	}
