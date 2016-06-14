@@ -299,3 +299,38 @@ void CHamming::encode17123(bool* d)
 	d[15] = d[0] ^ d[1] ^ d[4] ^ d[5] ^ d[7] ^ d[10];
 	d[16] = d[0] ^ d[1] ^ d[2] ^ d[5] ^ d[6] ^ d[8] ^ d[11];
 }
+
+bool CHamming::decode743(bool* d)
+{
+	assert(d != NULL);
+
+	// Calculate the checksum this column should have
+	bool c0 = d[0U] ^ d[1U] ^ d[2U];
+	bool c1 = d[1U] ^ d[2U] ^ d[3U];
+	bool c2 = d[0U] ^ d[1U] ^ d[3U];
+
+	// Compare these with the actual bits
+	unsigned char n = 0x00U;
+	n |= (c0 != d[4U]) ? 0x01U : 0x00U;
+	n |= (c1 != d[5U]) ? 0x02U : 0x00U;
+	n |= (c2 != d[6U]) ? 0x04U : 0x00U;
+
+	switch (n) {
+		// Parity bit errors
+		case 0x01U: d[4] = !d[4]; return true;
+		case 0x02U: d[5] = !d[5]; return true;
+		case 0x04U: d[6] = !d[6]; return true;
+
+		// Data bit errors
+		case 0x05U: d[0] = !d[0]; return true;
+		case 0x07U: d[1] = !d[1]; return true;
+		case 0x03U: d[2] = !d[2]; return true;
+		case 0x06U: d[3] = !d[3]; return true;
+
+		// No bit errors
+		case 0x00U: return true;
+
+		// Unrecoverable errors
+		default: return false;
+	}
+}

@@ -35,6 +35,8 @@ public:
 
 	static void encode17123(bool* d);
 	static bool decode17123(bool* d);
+
+	static bool decode743(bool *d);
 };
 
 #endif
