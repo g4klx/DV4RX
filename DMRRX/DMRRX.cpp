@@ -215,48 +215,52 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 	slotType.putData(buffer);
 
 	unsigned char type = slotType.getDataType();
+	unsigned char cc   = slotType.getColorCode();
+
 	if (type == DT_IDLE) {
-		LogMessage("%u [Data Sync] [IDLE]", m_slotNo);
+		LogMessage("%u [Data Sync] [IDLE] CC=%u", m_slotNo, cc);
 	} else if (type == DT_VOICE_LC_HEADER) {
 		CDMRFullLC fullLC;
 		CDMRLC* lc = fullLC.decode(buffer, type);
 		if (lc != NULL) {
-			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] src=%u dest=%s%u", m_slotNo, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
+			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] CC=%u src=%u dest=%s%u", m_slotNo, cc, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		} else {
-			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] invalid", m_slotNo);
+			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] CC=%u invalid", m_slotNo, cc);
 		}
 	} else if (type == DT_TERMINATOR_WITH_LC) {
 		CDMRFullLC fullLC;
 		CDMRLC* lc = fullLC.decode(buffer, type);
 		if (lc != NULL) {
-			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] src=%u dest=%s%u", m_slotNo, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
+			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] CC=%u src=%u dest=%s%u", m_slotNo, cc, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		} else {
-			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] invalid", m_slotNo);
+			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] CC=%u invalid", m_slotNo, cc);
 		}
 	} else if (type == DT_VOICE_PI_HEADER) {
-		LogMessage("%u [Data Sync] [VOICE_PI_HEADER]", m_slotNo);
+		LogMessage("%u [Data Sync] [VOICE_PI_HEADER] CC=%u", m_slotNo, cc);
 	} else if (type == DT_DATA_HEADER) {
 		CDMRDataHeader header;
 		bool valid = header.put(buffer);
-		if (valid) {
-			LogMessage("%u [Data Sync] [DATA_HEADER] src=%u dest=%s%u", m_slotNo, header.getSrcId(), header.getGI() ? "TG" : "", header.getDstId());
-		} else {
-			LogMessage("%u [Data Sync] [DATA_HEADER] invalid", m_slotNo);
-		}
-	} else if (type == DT_RATE_12_DATA || type == DT_RATE_34_DATA || type == DT_RATE_1_DATA) {
-		LogMessage("%u [Data Sync] [DATA]", m_slotNo);
+		if (valid)
+			LogMessage("%u [Data Sync] [DATA_HEADER] CC=%u src=%u dest=%s%u", m_slotNo, cc, header.getSrcId(), header.getGI() ? "TG" : "", header.getDstId());
+		else
+			LogMessage("%u [Data Sync] [DATA_HEADER] CC=%u invalid", m_slotNo, cc);
+	} else if (type == DT_RATE_12_DATA) {
+		LogMessage("%u [Data Sync] [RATE_1/2_DATA] CC=%u", m_slotNo, cc);
+	} else if (type == DT_RATE_34_DATA) {
+		LogMessage("%u [Data Sync] [RATE_3/4_DATA] CC=%u", m_slotNo, cc);
+	} else if (type == DT_RATE_1_DATA) {
+		LogMessage("%u [Data Sync] [RATE_1_DATA] CC=%u", m_slotNo, cc);
 	} else if (type == DT_CSBK) {
 		CDMRCSBK csbk;
 		bool valid = csbk.put(buffer);
-		if (valid) {
-			LogMessage("%u [Data Sync] [CSBK] src=%u dest=%s%u", m_slotNo, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
-		} else {
-			LogMessage("%u [Data Sync] [CSBK] invalid", m_slotNo);
-		}
+		if (valid)
+			LogMessage("%u [Data Sync] [CSBK] CC=%u src=%u dest=%s%u", m_slotNo, cc, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
+		else
+			LogMessage("%u [Data Sync] [CSBK] CC=%u invalid", m_slotNo, cc);
 	} else {
-		LogMessage("%u [Data Sync] [UNKNOWN] type=%u", m_slotNo, type);
+		LogMessage("%u [Data Sync] [UNKNOWN] CC=%u type=%u", m_slotNo, cc, type);
 	}
 }
 
