@@ -268,15 +268,15 @@ void CDMRRX::processCACH(const unsigned char* buffer)
 {
 	bool word[7U];
 
-	word[0U] = (buffer[2U] & 0x80U) == 0x80U;
-	word[1U] = (buffer[2U] & 0x08U) == 0x08U;
+	word[0U] = (buffer[0U] & 0x80U) == 0x80U;
+	word[1U] = (buffer[0U] & 0x08U) == 0x08U;
 
 	word[2U] = (buffer[1U] & 0x80U) == 0x80U;
 	word[3U] = (buffer[1U] & 0x08U) == 0x08U;
 
 	word[4U] = (buffer[1U] & 0x02U) == 0x02U;
-	word[5U] = (buffer[0U] & 0x20U) == 0x20U;
-	word[6U] = (buffer[0U] & 0x02U) == 0x02U;
+	word[5U] = (buffer[2U] & 0x20U) == 0x20U;
+	word[6U] = (buffer[2U] & 0x02U) == 0x02U;
 
 	CHamming::decode743(word);
 
