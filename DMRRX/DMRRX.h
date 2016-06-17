@@ -48,6 +48,7 @@ private:
 	unsigned char* m_buffer;
 	unsigned int   m_shortN;
 	unsigned char* m_shortLC;
+	unsigned int   m_n;
 
 	void decode(const unsigned char* data, unsigned int length);
 	void processBit(bool b);
