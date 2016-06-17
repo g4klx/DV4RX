@@ -89,7 +89,8 @@ m_type(SYNC_NONE),
 m_receiving(false),
 m_buffer(NULL),
 m_shortN(0U),
-m_shortLC(NULL)
+m_shortLC(NULL),
+m_n(0U)
 {
 	m_buffer  = new unsigned char[DMR_FRAME_LENGTH_BYTES];
 	m_shortLC = new unsigned char[9U];
@@ -185,10 +186,14 @@ void CDMRRX::processBit(bool b)
 		switch (m_type) {
 		case SYNC_AUDIO:
 			LogMessage("%u [Audio Sync]", m_slotNo);
+			m_n = 0U;
 			break;
 		case SYNC_DATA:
 			processDataSync(m_buffer);
 			break;
+		case SYNC_NONE:
+			m_n++;
+			LogMessage("%u [Burst with no Sync (EMB) %u]", m_slotNo,m_n);
 		default:
 			break;
 		}
