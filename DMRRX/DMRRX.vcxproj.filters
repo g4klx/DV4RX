@@ -74,6 +74,12 @@
     <ClInclude Include="DMREmbeddedLC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AMBEFEC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Golay24128.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CRC.cpp">
@@ -131,6 +137,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DMREmbeddedLC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AMBEFEC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Golay24128.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

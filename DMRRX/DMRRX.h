@@ -59,6 +59,7 @@ private:
 	void processDataSync(const unsigned char* buffer);
 	void processCACH(const unsigned char* buffer);
 	void processAudio(const unsigned char* buffer);
+	unsigned int idleBER(const unsigned char* buffer);
 };
 
 #endif

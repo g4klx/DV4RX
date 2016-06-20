@@ -24,6 +24,7 @@
 #include "DMRFullLC.h"
 #include "Hamming.h"
 #include "DMRCSBK.h"
+#include "AMBEFEC.h"
 #include "DV4mini.h"
 #include "DMREMB.h"
 #include "Utils.h"
@@ -40,6 +41,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
+const unsigned char IDLE_DATA[] =
+	{0x53U, 0xC2U, 0x5EU, 0xABU, 0xA8U, 0x67U, 0x1DU, 0xC7U, 0x38U, 0x3BU, 0xD9U,
+	 0x36U, 0x00U, 0x0DU, 0xFFU, 0x57U, 0xD7U, 0x5DU, 0xF5U, 0xD0U, 0x03U, 0xF6U,
+	 0xE4U, 0x65U, 0x17U, 0x1BU, 0x48U, 0xCAU, 0x6DU, 0x4FU, 0xC6U, 0x10U, 0xB4U};
 
 const unsigned int CACH_INTERLEAVE[] =
 	{1U, 2U, 3U, 5U, 6U, 7U, 9U, 10U, 11U, 13U, 15U, 16U, 17U, 19U, 20U, 21U, 23U};
@@ -186,9 +192,12 @@ void CDMRRX::processBit(bool b)
 		// CUtils::dump("DMR Frame bytes", m_buffer, DMR_FRAME_LENGTH_BYTES);
 
 		switch (m_type) {
-		case SYNC_AUDIO:
-			LogMessage("%u [Audio Sync]", m_slotNo);
-			m_n = 0U;
+		case SYNC_AUDIO: {
+				CAMBEFEC fec;
+				unsigned int ber = fec.regenerateDMR(m_buffer);
+				LogMessage("%u [Audio Sync] BER=%.1f%%", m_slotNo, float(ber * 100U) / 141.0F);
+				m_n = 0U;
+			}
 			break;
 		case SYNC_DATA:
 			processDataSync(m_buffer);
@@ -225,7 +234,8 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 	unsigned char cc   = slotType.getColorCode();
 
 	if (type == DT_IDLE) {
-		LogMessage("%u [Data Sync] [IDLE] CC=%u", m_slotNo, cc);
+		unsigned int ber = idleBER(m_buffer);
+		LogMessage("%u [Data Sync] [IDLE] CC=%u BER=%.1f%%", m_slotNo, cc, float(ber * 100U) / 216.0F);
 	} else if (type == DT_VOICE_LC_HEADER) {
 		CDMRFullLC fullLC;
 		CDMRLC* lc = fullLC.decode(buffer, type);
@@ -233,7 +243,7 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] CC=%u src=%u dest=%s%u", m_slotNo, cc, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		} else {
-			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] CC=%u invalid", m_slotNo, cc);
+			LogMessage("%u [Data Sync] [VOICE_LC_HEADER] CC=%u <Invalid LC>", m_slotNo, cc);
 		}
 	} else if (type == DT_TERMINATOR_WITH_LC) {
 		CDMRFullLC fullLC;
@@ -242,7 +252,7 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] CC=%u src=%u dest=%s%u", m_slotNo, cc, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		} else {
-			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] CC=%u invalid", m_slotNo, cc);
+			LogMessage("%u [Data Sync] [DT_TERMINATOR_WITH_LC] CC=%u <Invalid LC>", m_slotNo, cc);
 		}
 	} else if (type == DT_VOICE_PI_HEADER) {
 		LogMessage("%u [Data Sync] [VOICE_PI_HEADER] CC=%u", m_slotNo, cc);
@@ -323,6 +333,9 @@ void CDMRRX::processCACH(const unsigned char* buffer)
 
 void CDMRRX::processAudio(const unsigned char* buffer)
 {
+	CAMBEFEC fec;
+	unsigned int ber = fec.regenerateDMR(m_buffer);
+
 	CDMREMB emb;
 	emb.putData(buffer);
 
@@ -338,12 +351,30 @@ void CDMRRX::processAudio(const unsigned char* buffer)
 
 	if (lcss == 0x02U) {
 		if (lc == NULL) {
-			LogMessage("%u [Audio] CC=%u LCSS=%d%d n=%u <Invalid LC>", m_slotNo, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
+			LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u <Invalid LC>", m_slotNo, float(ber * 100U) / 141.0F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
 		} else {
-			LogMessage("%u [Audio] CC=%u LCSS=%d%d n=%u src=%u dest=%s%u", m_slotNo, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
+			LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u src=%u dest=%s%u", m_slotNo, float(ber * 100U) / 141.0F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		}
 	} else {
-		LogMessage("%u [Audio] CC=%u LCSS=%d%d n=%u", m_slotNo, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
+		LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u", m_slotNo, float(ber * 100U) / 141.0F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
 	}
+}
+
+unsigned int CDMRRX::idleBER(const unsigned char* buffer)
+{
+	unsigned int errs = 0U;
+
+	for (unsigned int i = 0U; i < DMR_FRAME_LENGTH_BYTES; i++) {
+		unsigned char v1 = buffer[i] & PAYLOAD_MASK[i];
+		unsigned char v2 = IDLE_DATA[i] & PAYLOAD_MASK[i];
+		unsigned char v = v1 ^ v2;
+
+		while (v != 0U) {
+			v &= v - 1U;
+			errs++;
+		}
+	}
+
+	return errs;
 }
