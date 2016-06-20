@@ -19,6 +19,8 @@
 #if !defined(DMRRX_H)
 #define	DMRRX_H
 
+#include "DMREmbeddedLC.h"
+
 #include <string>
 
 #include <cstdint>
@@ -49,12 +51,14 @@ private:
 	unsigned int   m_shortN;
 	unsigned char* m_shortLC;
 	unsigned int   m_n;
+	CDMREmbeddedLC m_embeddedLC;
 
 	void decode(const unsigned char* data, unsigned int length);
 	void processBit(bool b);
 
 	void processDataSync(const unsigned char* buffer);
 	void processCACH(const unsigned char* buffer);
+	void processAudio(const unsigned char* buffer);
 };
 
 #endif

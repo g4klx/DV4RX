@@ -147,6 +147,8 @@
     <ClInclude Include="DMRCSBK.h" />
     <ClInclude Include="DMRDataHeader.h" />
     <ClInclude Include="DMRDefines.h" />
+    <ClInclude Include="DMREMB.h" />
+    <ClInclude Include="DMREmbeddedLC.h" />
     <ClInclude Include="DMRFullLC.h" />
     <ClInclude Include="DMRLC.h" />
     <ClInclude Include="DMRRX.h" />
@@ -156,6 +158,7 @@
     <ClInclude Include="Golay2087.h" />
     <ClInclude Include="Hamming.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="QR1676.h" />
     <ClInclude Include="RS129.h" />
     <ClInclude Include="SerialController.h" />
     <ClInclude Include="Utils.h" />
@@ -166,6 +169,8 @@
     <ClCompile Include="CRC.cpp" />
     <ClCompile Include="DMRCSBK.cpp" />
     <ClCompile Include="DMRDataHeader.cpp" />
+    <ClCompile Include="DMREMB.cpp" />
+    <ClCompile Include="DMREmbeddedLC.cpp" />
     <ClCompile Include="DMRFullLC.cpp" />
     <ClCompile Include="DMRLC.cpp" />
     <ClCompile Include="DMRRX.cpp" />
@@ -175,6 +180,7 @@
     <ClCompile Include="Golay2087.cpp" />
     <ClCompile Include="Hamming.cpp" />
     <ClCompile Include="Log.cpp" />
+    <ClCompile Include="QR1676.cpp" />
     <ClCompile Include="RS129.cpp" />
     <ClCompile Include="SerialController.cpp" />
     <ClCompile Include="Utils.cpp" />

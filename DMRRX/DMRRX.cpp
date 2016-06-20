@@ -25,6 +25,7 @@
 #include "Hamming.h"
 #include "DMRCSBK.h"
 #include "DV4mini.h"
+#include "DMREMB.h"
 #include "Utils.h"
 #include "Log.h"
 
@@ -90,7 +91,8 @@ m_receiving(false),
 m_buffer(NULL),
 m_shortN(0U),
 m_shortLC(NULL),
-m_n(0U)
+m_n(0U),
+m_embeddedLC()
 {
 	m_buffer  = new unsigned char[DMR_FRAME_LENGTH_BYTES];
 	m_shortLC = new unsigned char[9U];
@@ -192,8 +194,8 @@ void CDMRRX::processBit(bool b)
 			processDataSync(m_buffer);
 			break;
 		case SYNC_NONE:
-			m_n++;
-			LogMessage("%u [Burst with no Sync (EMB) %u]", m_slotNo,m_n);
+			processAudio(m_buffer);
+			break;
 		default:
 			break;
 		}
@@ -305,9 +307,9 @@ void CDMRRX::processCACH(const unsigned char* buffer)
 		bool valid = shortLC.decode(m_shortLC, lc);
 
 		if (valid)
-			LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d LC=%02X %02X %02X %02X %02X", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0, lc[0U], lc[1U], lc[2U], lc[3U], lc[4U]);
+			LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d %02X %02X %02X %02X %02X %02X %02X %02X %02X LC=%02X %02X %02X %02X %02X", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0, m_shortLC[0U], m_shortLC[1U], m_shortLC[2U], m_shortLC[3U], m_shortLC[4U], m_shortLC[5U], m_shortLC[6U], m_shortLC[7U], m_shortLC[8U], lc[0U], lc[1U], lc[2U], lc[3U], lc[4U]);
 		else
-			LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0);
+			LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d %02X %02X %02X %02X %02X %02X %02X %02X %02X <Invalid LC>", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0, m_shortLC[0U], m_shortLC[1U], m_shortLC[2U], m_shortLC[3U], m_shortLC[4U], m_shortLC[5U], m_shortLC[6U], m_shortLC[7U], m_shortLC[8U]);
 	} else {
 		LogMessage("  [CACH] AT=%d TC=%d LCSS=%d%d", word[0U] ? 1 : 0, word[1U] ? 1 : 0, word[2U] ? 1 : 0, word[3U] ? 1 : 0);
 	}
@@ -317,4 +319,31 @@ void CDMRRX::processCACH(const unsigned char* buffer)
 		m_shortN = 0U;
 
 	m_slotNo = word[1U] ? 2U : 1U;
+}
+
+void CDMRRX::processAudio(const unsigned char* buffer)
+{
+	CDMREMB emb;
+	emb.putData(buffer);
+
+	unsigned char colorCode = emb.getColorCode();
+	unsigned char lcss      = emb.getLCSS();
+
+	bool l1 = (lcss & 0x02U) == 0x02U;
+	bool l0 = (lcss & 0x01U) == 0x01U;
+
+	CDMRLC* lc = m_embeddedLC.addData(m_buffer, lcss);
+
+	m_n++;
+
+	if (lcss == 0x02U) {
+		if (lc == NULL) {
+			LogMessage("%u [Audio] CC=%u LCSS=%d%d n=%u <Invalid LC>", m_slotNo, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
+		} else {
+			LogMessage("%u [Audio] CC=%u LCSS=%d%d n=%u src=%u dest=%s%u", m_slotNo, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
+			delete lc;
+		}
+	} else {
+		LogMessage("%u [Audio] CC=%u LCSS=%d%d n=%u", m_slotNo, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
+	}
 }
