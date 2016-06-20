@@ -195,7 +195,7 @@ void CDMRRX::processBit(bool b)
 		case SYNC_AUDIO: {
 				CAMBEFEC fec;
 				unsigned int ber = fec.regenerateDMR(m_buffer);
-				LogMessage("%u [Audio Sync] BER=%.1f%%", m_slotNo, float(ber * 100U) / 141.0F);
+				LogMessage("%u [Audio Sync] BER=%.1f%%", m_slotNo, float(ber) / 1.41F);
 				m_n = 0U;
 			}
 			break;
@@ -235,7 +235,7 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 
 	if (type == DT_IDLE) {
 		unsigned int ber = idleBER(m_buffer);
-		LogMessage("%u [Data Sync] [IDLE] CC=%u BER=%.1f%%", m_slotNo, cc, float(ber * 100U) / 216.0F);
+		LogMessage("%u [Data Sync] [IDLE] CC=%u BER=%.1f%%", m_slotNo, cc, float(ber) / 2.16F);
 	} else if (type == DT_VOICE_LC_HEADER) {
 		CDMRFullLC fullLC;
 		CDMRLC* lc = fullLC.decode(buffer, type);
@@ -351,13 +351,13 @@ void CDMRRX::processAudio(const unsigned char* buffer)
 
 	if (lcss == 0x02U) {
 		if (lc == NULL) {
-			LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u <Invalid LC>", m_slotNo, float(ber * 100U) / 141.0F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
+			LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u <Invalid LC>", m_slotNo, float(ber) / 1.41F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
 		} else {
-			LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u src=%u dest=%s%u", m_slotNo, float(ber * 100U) / 141.0F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
+			LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u src=%u dest=%s%u", m_slotNo, float(ber) / 1.41F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n, lc->getSrcId(), lc->getFLCO() == FLCO_GROUP ? "TG" : "", lc->getDstId());
 			delete lc;
 		}
 	} else {
-		LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u", m_slotNo, float(ber * 100U) / 141.0F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
+		LogMessage("%u [Audio] BER=%.1f%% CC=%u LCSS=%d%d n=%u", m_slotNo, float(ber) / 1.41F, colorCode, l0 ? 1 : 0, l0 ? 1 : 0, m_n);
 	}
 }
 
