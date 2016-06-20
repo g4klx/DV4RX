@@ -180,12 +180,18 @@ void CYSFRX::processBit(bool b)
 
 		case YSF_FI_COMMUNICATIONS:
 			switch (dt) {
-			case YSF_DT_VD_MODE1:
-				payload.processVDMode1Data(m_buffer, fn);
+			case YSF_DT_VD_MODE1: {
+					payload.processVDMode1Data(m_buffer, fn);
+					unsigned int errors = payload.processVDMode1Audio(m_buffer);
+					LogMessage("YSF, V/D Mode 1, BER=%.1f%%", float(errors) / 2.35F);
+				}
 				break;
 
-			case YSF_DT_VD_MODE2:
-				payload.processVDMode2Data(m_buffer, fn);
+			case YSF_DT_VD_MODE2: {
+					payload.processVDMode2Data(m_buffer, fn);
+					unsigned int errors = payload.processVDMode2Audio(m_buffer);
+					LogMessage("YSF, V/D Mode 2, BER=%.1f%%", float(errors) / 1.35F);
+				}
 				break;
 
 			case YSF_DT_DATA_FR_MODE:
@@ -193,8 +199,12 @@ void CYSFRX::processBit(bool b)
 				break;
 
 			case YSF_DT_VOICE_FR_MODE:
-				if (fn == 0U && ft == 1U)
+				if (fn == 0U && ft == 1U) {
 					payload.processVoiceFRModeData(m_buffer);
+				} else {
+					unsigned int errors = payload.processVoiceFRModeAudio(m_buffer);
+					LogMessage("YSF, V Mode 3, BER=%.1f%%", float(errors) / 7.2F);
+				}
 				break;
 
 			default:

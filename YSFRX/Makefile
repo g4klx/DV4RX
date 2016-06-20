@@ -4,7 +4,7 @@ CFLAGS  = -g -O3 -Wall -std=c++0x
 LIBS    =
 LDFLAGS = -g
 
-OBJECTS = CRC.o DV4mini.o Golay24128.o Log.o SerialController.o Utils.o YSFConvolution.o YSFFICH.o YSFPayload.o YSFRX.o
+OBJECTS = AMBEFEC.o CRC.o DV4mini.o Golay24128.o Hamming.o Log.o SerialController.o Utils.o YSFConvolution.o YSFFICH.o YSFPayload.o YSFRX.o
 
 all:		YSFRX
 

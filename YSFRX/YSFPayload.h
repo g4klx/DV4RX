@@ -19,6 +19,8 @@
 #if !defined(YSFPayload_H)
 #define	YSFPayload_H
 
+#include "AMBEFEC.h"
+
 #include <string>
 
 class CYSFPayload {
@@ -31,14 +33,18 @@ public:
 	bool processTerminatorData(unsigned char* bytes);
 
 	bool processVDMode1Data(unsigned char* bytes, unsigned char fn);
+	unsigned int processVDMode1Audio(unsigned char* bytes);
 
 	bool processVDMode2Data(unsigned char* bytes, unsigned char fn);
+	unsigned int processVDMode2Audio(unsigned char* bytes);
 
 	bool processDataFRModeData(unsigned char* bytes, unsigned char fn);
 
 	bool processVoiceFRModeData(unsigned char* bytes);
+	unsigned int processVoiceFRModeAudio(unsigned char* bytes);
 
 private:
+	CAMBEFEC m_fec;
 };
 
 #endif
