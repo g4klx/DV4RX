@@ -159,11 +159,13 @@ void CYSFRX::processBit(bool b)
 	bool valid = fich.decode(m_buffer);
 	if (valid) {
 		unsigned char dt = fich.getDT();
-		unsigned char fn = fich.getFN();
 		unsigned char fi = fich.getFI();
+		unsigned char bn = fich.getBN();
+		unsigned char bt = fich.getBT();
+		unsigned char fn = fich.getFN();
 		unsigned char ft = fich.getFT();
 
-		LogMessage("FICH: FI: %u, DT: %u, FN: %u, FT: %u", fi, dt, fn, ft);
+		LogMessage("FICH: FI: %u, DT: %u, BN: %u, BT: %u, FN: %u, FT: %u", fi, dt, bn, bt, fn, ft);
 
 		CYSFPayload payload;
 
