@@ -52,6 +52,8 @@ private:
 	unsigned char* m_shortLC;
 	unsigned int   m_n;
 	CDMREmbeddedLC m_embeddedLC;
+	unsigned int   m_idleBits;
+	unsigned int   m_idleErrs;
 
 	void decode(const unsigned char* data, unsigned int length);
 	void processBit(bool b);

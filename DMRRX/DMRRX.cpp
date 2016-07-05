@@ -103,7 +103,9 @@ m_buffer(NULL),
 m_shortN(0U),
 m_shortLC(NULL),
 m_n(0U),
-m_embeddedLC()
+m_embeddedLC(),
+m_idleBits(0U),
+m_idleErrs(0U)
 {
 	m_buffer  = new unsigned char[DMR_FRAME_LENGTH_BYTES];
 	m_shortLC = new unsigned char[9U];
@@ -218,8 +220,11 @@ void CDMRRX::processBit(bool b)
 
 		m_count++;
 		if (m_count >= 10U) {
-			LogMessage("Signal lost");
+			if (m_idleBits == 0U) m_idleBits = 1U;
+			LogMessage("Signal lost, BER=%.1f%%", float(m_idleErrs * 100U) / float(m_idleBits));
 			m_receiving = false;
+			m_idleBits = 0U;
+			m_idleErrs = 0U;
 		}
 	}
 
@@ -241,6 +246,8 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 	if (type == DT_IDLE) {
 		unsigned int ber = idleBER(m_buffer);
 		LogMessage("%u [Data Sync] [IDLE] CC=%u BER=%.1f%%", m_slotNo, cc, float(ber) / 1.96F);
+		m_idleBits += 196U;
+		m_idleErrs += ber;
 	} else if (type == DT_VOICE_LC_HEADER) {
 		CDMRFullLC fullLC;
 		CDMRLC* lc = fullLC.decode(buffer, type);
