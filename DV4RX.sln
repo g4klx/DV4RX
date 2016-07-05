@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "YSFRX", "YSFRX\YSFRX.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DMRRX", "DMRRX\DMRRX.vcxproj", "{50D737DA-CB7A-4E26-8744-481637FF32CC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DStarRX", "DStarRX\DStarRX.vcxproj", "{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{50D737DA-CB7A-4E26-8744-481637FF32CC}.Release|x64.Build.0 = Release|x64
 		{50D737DA-CB7A-4E26-8744-481637FF32CC}.Release|x86.ActiveCfg = Release|Win32
 		{50D737DA-CB7A-4E26-8744-481637FF32CC}.Release|x86.Build.0 = Release|Win32
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Debug|x64.ActiveCfg = Debug|x64
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Debug|x64.Build.0 = Debug|x64
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Debug|x86.ActiveCfg = Debug|Win32
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Debug|x86.Build.0 = Debug|Win32
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Release|x64.ActiveCfg = Release|x64
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Release|x64.Build.0 = Release|x64
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Release|x86.ActiveCfg = Release|Win32
+		{A4F1AEEE-AD10-49D0-8AD9-4966C829A334}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

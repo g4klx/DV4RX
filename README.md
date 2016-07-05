@@ -7,3 +7,7 @@ Usage is: YSFRX serial_port freq_in_hertz
 The second receiver, for DMR, is only for monitoring the output of DMR repeaters. Like the System Fusion receiver, it decodes control information, not the audio.
 
 Usage is: DMRRX serial_port freq_in_hertz
+
+The third receiver, for D-Star dumps all of the information in a D-Star transmission except for the audio. The slow data is not interpreted, but merely displayed as hex and characters.
+
+Usage is: DStarRX serial_port freq_in_hertz
