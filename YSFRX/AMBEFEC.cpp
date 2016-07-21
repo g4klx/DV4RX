@@ -478,9 +478,9 @@ unsigned int CAMBEFEC::regenerateDMR(unsigned char* bytes) const
 {
 	assert(bytes != NULL);
 
-	unsigned int a1 = 0U, a2 = 0U, a3 = 0U;
-	unsigned int b1 = 0U, b2 = 0U, b3 = 0U;
-	unsigned int c1 = 0U, c2 = 0U, c3 = 0U;
+	unsigned int a1 = 0U;
+	unsigned int b1 = 0U;
+	unsigned int c1 = 0U;
 
 	unsigned int MASK = 0x800000U;
 	for (unsigned int i = 0U; i < 24U; i++) {
@@ -488,45 +488,17 @@ unsigned int CAMBEFEC::regenerateDMR(unsigned char* bytes) const
 		unsigned int b1Pos = DMR_B_TABLE[i];
 		unsigned int c1Pos = DMR_C_TABLE[i];
 
-		unsigned int a2Pos = a1Pos + 72U;
-		if (a2Pos >= 108U)
-			a2Pos += 48U;
-		unsigned int b2Pos = b1Pos + 72U;
-		if (b2Pos >= 108U)
-			b2Pos += 48U;
-		unsigned int c2Pos = c1Pos + 72U;
-		if (c2Pos >= 108U)
-			c2Pos += 48U;
-
-		unsigned int a3Pos = a1Pos + 192U;
-		unsigned int b3Pos = b1Pos + 192U;
-		unsigned int c3Pos = c1Pos + 192U;
-
 		if (READ_BIT(bytes, a1Pos))
 			a1 |= MASK;
-		if (READ_BIT(bytes, a2Pos))
-			a2 |= MASK;
-		if (READ_BIT(bytes, a3Pos))
-			a3 |= MASK;
 		if (READ_BIT(bytes, b1Pos))
 			b1 |= MASK;
-		if (READ_BIT(bytes, b2Pos))
-			b2 |= MASK;
-		if (READ_BIT(bytes, b3Pos))
-			b3 |= MASK;
 		if (READ_BIT(bytes, c1Pos))
 			c1 |= MASK;
-		if (READ_BIT(bytes, c2Pos))
-			c2 |= MASK;
-		if (READ_BIT(bytes, c3Pos))
-			c3 |= MASK;
 
 		MASK >>= 1;
 	}
 
 	unsigned int errors = regenerate(a1, b1, c1, true);
-	errors += regenerate(a2, b2, c2, true);
-	errors += regenerate(a3, b3, c3, true);
 
 	MASK = 0x800000U;
 	for (unsigned int i = 0U; i < 24U; i++) {
@@ -534,29 +506,9 @@ unsigned int CAMBEFEC::regenerateDMR(unsigned char* bytes) const
 		unsigned int b1Pos = DMR_B_TABLE[i];
 		unsigned int c1Pos = DMR_C_TABLE[i];
 
-		unsigned int a2Pos = a1Pos + 72U;
-		if (a2Pos >= 108U)
-			a2Pos += 48U;
-		unsigned int b2Pos = b1Pos + 72U;
-		if (b2Pos >= 108U)
-			b2Pos += 48U;
-		unsigned int c2Pos = c1Pos + 72U;
-		if (c2Pos >= 108U)
-			c2Pos += 48U;
-
-		unsigned int a3Pos = a1Pos + 192U;
-		unsigned int b3Pos = b1Pos + 192U;
-		unsigned int c3Pos = c1Pos + 192U;
-
 		WRITE_BIT(bytes, a1Pos, a1 & MASK);
-		WRITE_BIT(bytes, a2Pos, a2 & MASK);
-		WRITE_BIT(bytes, a3Pos, a3 & MASK);
 		WRITE_BIT(bytes, b1Pos, b1 & MASK);
-		WRITE_BIT(bytes, b2Pos, b2 & MASK);
-		WRITE_BIT(bytes, b3Pos, b3 & MASK);
 		WRITE_BIT(bytes, c1Pos, c1 & MASK);
-		WRITE_BIT(bytes, c2Pos, c2 & MASK);
-		WRITE_BIT(bytes, c3Pos, c3 & MASK);
 
 		MASK >>= 1;
 	}
