@@ -216,17 +216,29 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (argc < 3) {
-		::fprintf(stderr, "Usage: DStarRX [-v|--version] <port> <frequency\n");
+	if (argc != 3 && argc != 5) {
+		::fprintf(stderr, "Usage: DStarRX [-v|--version] <port> <frequency> [<address> <port>]\n");
 		return 1;
 	}
 
 	std::string port = std::string(argv[1U]);
 	unsigned int frequency = ::atoi(argv[2U]);
 
+	CDStarRX rx(port, frequency);
+
+	if (argc == 5) {
+		std::string address = std::string(argv[3U]);
+		unsigned int port = ::atoi(argv[4U]);
+
+		bool ret = rx.output(address, port);
+		if (!ret) {
+			::fprintf(stderr, "DStarRX: cannot open the UDP output port\n");
+			return 1;
+		}
+	}
+
 	::LogInitialise(".", "DStarRX", 1U, 1U);
 
-	CDStarRX rx(port, frequency);
 	rx.run();
 
 	::LogFinalise();
@@ -237,6 +249,9 @@ int main(int argc, char** argv)
 CDStarRX::CDStarRX(const std::string& port, unsigned int frequency) :
 m_port(port),
 m_frequency(frequency),
+m_udpAddress(),
+m_udpPort(0U),
+m_socket(NULL),
 m_bits(0U),
 m_count(0U),
 m_pos(0U),
@@ -256,6 +271,25 @@ m_fecOutput()
 CDStarRX::~CDStarRX()
 {
 	delete[] m_buffer;
+}
+
+bool CDStarRX::output(const std::string& address, unsigned int port)
+{
+	m_udpAddress = CUDPSocket::lookup(address);
+	if (m_udpAddress.s_addr == INADDR_NONE)
+		return false;
+
+	m_udpPort = port;
+
+	m_socket = new CUDPSocket;
+
+	bool ret = m_socket->open();
+	if (!ret) {
+		delete m_socket;
+		return false;
+	}
+
+	return true;
 }
 
 void CDStarRX::run()
@@ -285,6 +319,11 @@ void CDStarRX::run()
 	}
 
 	dv4mini.close();
+
+	if (m_socket != NULL) {
+		m_socket->close();
+		delete m_socket;
+	}
 }
 
 void CDStarRX::decode(const unsigned char* data, unsigned int length)
@@ -373,6 +412,9 @@ void CDStarRX::processData(bool b)
 			m_buffer[10U] ^ DSTAR_SCRAMBLER_BYTES[1U],
 			m_buffer[11U] ^ DSTAR_SCRAMBLER_BYTES[2U]);
 		m_pos = 0U;
+
+		if (m_socket != NULL)
+			m_socket->write(m_buffer, DSTAR_AMBE_LENGTH_BYTES, m_udpAddress, m_udpPort);
 
 		m_count++;
 		if (m_count >= (21U * 3U)) {

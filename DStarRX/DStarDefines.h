@@ -27,6 +27,9 @@ const unsigned int DSTAR_HEADER_LENGTH_BITS  = DSTAR_HEADER_LENGTH_BYTES * 8U;
 const unsigned int DSTAR_FEC_SECTION_LENGTH_BYTES = 83U;
 const unsigned int DSTAR_FEC_SECTION_LENGTH_BITS  = 660U;
 
+const unsigned int DSTAR_AMBE_LENGTH_BYTES = 9U;
+const unsigned int DSTAR_AMBE_LENGTH_BITS = DSTAR_AMBE_LENGTH_BYTES * 8U;
+
 const unsigned int DSTAR_DATA_LENGTH_BYTES = 12U;
 const unsigned int DSTAR_DATA_LENGTH_BITS  = DSTAR_DATA_LENGTH_BYTES * 8U;
 

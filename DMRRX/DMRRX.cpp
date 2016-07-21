@@ -72,17 +72,29 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (argc < 3) {
-		::fprintf(stderr, "Usage: DMRRX [-v|--version] <port> <frequency\n");
+	if (argc != 3 && argc != 5) {
+		::fprintf(stderr, "Usage: DMRRX [-v|--version] <port> <frequency> [<address> <port>]\n");
 		return 1;
 	}
 
 	std::string port = std::string(argv[1U]);
 	unsigned int frequency = ::atoi(argv[2U]);
 
+	CDMRRX rx(port, frequency);
+
+	if (argc == 5) {
+		std::string address = std::string(argv[3U]);
+		unsigned int port = ::atoi(argv[4U]);
+
+		bool ret = rx.output(address, port);
+		if (!ret) {
+			::fprintf(stderr, "DMRRX: cannot open the UDP output port\n");
+			return 1;
+		}
+	}
+
 	::LogInitialise(".", "DMRRX", 1U, 1U);
 
-	CDMRRX rx(port, frequency);
 	rx.run();
 
 	::LogFinalise();
@@ -93,6 +105,9 @@ int main(int argc, char** argv)
 CDMRRX::CDMRRX(const std::string& port, unsigned int frequency) :
 m_port(port),
 m_frequency(frequency),
+m_udpAddress(),
+m_udpPort(0U),
+m_socket(NULL),
 m_bits(0U),
 m_count(0U),
 m_pos(0U),
@@ -115,6 +130,25 @@ CDMRRX::~CDMRRX()
 {
 	delete[] m_buffer;
 	delete[] m_shortLC;
+}
+
+bool CDMRRX::output(const std::string& address, unsigned int port)
+{
+	m_udpAddress = CUDPSocket::lookup(address);
+	if (m_udpAddress.s_addr == INADDR_NONE)
+		return false;
+
+	m_udpPort = port;
+
+	m_socket = new CUDPSocket;
+
+	bool ret = m_socket->open();
+	if (!ret) {
+		delete m_socket;
+		return false;
+	}
+
+	return true;
 }
 
 void CDMRRX::run()
@@ -144,6 +178,11 @@ void CDMRRX::run()
 	}
 
 	dv4mini.close();
+
+	if (m_socket != NULL) {
+		m_socket->close();
+		delete m_socket;
+	}
 }
 
 void CDMRRX::decode(const unsigned char* data, unsigned int length)
@@ -204,7 +243,10 @@ void CDMRRX::processBit(bool b)
 				unsigned int ber = fec.regenerateDMR(m_buffer);
 				LogMessage("%u [Audio Sync] BER=%.1f%%", m_slotNo, float(ber) / 1.41F);
 				m_n = 0U;
-			}
+
+				if (m_socket != NULL)
+					writeAMBE(m_buffer);
+		}
 			break;
 		case SYNC_DATA:
 			processDataSync(m_buffer);
@@ -348,6 +390,9 @@ void CDMRRX::processAudio(const unsigned char* buffer)
 	CAMBEFEC fec;
 	unsigned int ber = fec.regenerateDMR(m_buffer);
 
+	if (m_socket != NULL)
+		writeAMBE(m_buffer);
+
 	CDMREMB emb;
 	emb.putData(buffer);
 
@@ -389,4 +434,18 @@ unsigned int CDMRRX::idleBER(const unsigned char* buffer)
 	}
 
 	return errs;
+}
+
+void CDMRRX::writeAMBE(const unsigned char* buffer)
+{
+	unsigned char ambe[DMR_AMBE_LENGTH_BYTES];
+
+	for (unsigned int i = 0U; i < 13U; i++) {
+		ambe[i + 0U]  = buffer[i + 0U];
+		ambe[i + 14U] = buffer[i + 20U];
+	}
+
+	ambe[13U] = (buffer[13U] & 0xF0U) | (buffer[19U] & 0x0FU);
+
+	m_socket->write(ambe, DMR_AMBE_LENGTH_BYTES, m_udpAddress, m_udpPort);
 }

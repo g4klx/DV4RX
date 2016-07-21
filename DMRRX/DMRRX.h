@@ -20,6 +20,7 @@
 #define	DMRRX_H
 
 #include "DMREmbeddedLC.h"
+#include "UDPSocket.h"
 
 #include <string>
 
@@ -36,11 +37,16 @@ public:
 	CDMRRX(const std::string& port, unsigned int frequency);
 	~CDMRRX();
 
+	bool output(const std::string& address, unsigned int port);
+
 	void run();
 
 private:
 	std::string    m_port;
 	unsigned int   m_frequency;
+	in_addr        m_udpAddress;
+	unsigned int   m_udpPort;
+	CUDPSocket*    m_socket;
 	uint64_t       m_bits;
 	unsigned int   m_count;
 	unsigned int   m_pos;
@@ -62,6 +68,8 @@ private:
 	void processCACH(const unsigned char* buffer);
 	void processAudio(const unsigned char* buffer);
 	unsigned int idleBER(const unsigned char* buffer);
+
+	void writeAMBE(const unsigned char* buffer);
 };
 
 #endif

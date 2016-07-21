@@ -51,17 +51,29 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (argc < 3) {
-		::fprintf(stderr, "Usage: YSFRX [-v|--version] <port> <frequency\n");
+	if (argc != 3 && argc != 5) {
+		::fprintf(stderr, "Usage: YSFRX [-v|--version] <port> <frequency> [<address> <port>]\n");
 		return 1;
 	}
 
 	std::string port = std::string(argv[1U]);
 	unsigned int frequency = ::atoi(argv[2U]);
 
+	CYSFRX rx(port, frequency);
+
+	if (argc == 5) {
+		std::string address = std::string(argv[3U]);
+		unsigned int port = ::atoi(argv[4U]);
+
+		bool ret = rx.output(address, port);
+		if (!ret) {
+			::fprintf(stderr, "YSFRX: cannot open the UDP output port\n");
+			return 1;
+		}
+	}
+
 	::LogInitialise(".", "YSFRX", 1U, 1U);
 
-	CYSFRX rx(port, frequency);
 	rx.run();
 
 	::LogFinalise();
@@ -72,6 +84,9 @@ int main(int argc, char** argv)
 CYSFRX::CYSFRX(const std::string& port, unsigned int frequency) :
 m_port(port),
 m_frequency(frequency),
+m_udpAddress(),
+m_udpPort(0U),
+m_socket(NULL),
 m_bits(0U),
 m_count(0U),
 m_pos(0U),
@@ -84,6 +99,25 @@ m_buffer(NULL)
 CYSFRX::~CYSFRX()
 {
 	delete[] m_buffer;
+}
+
+bool CYSFRX::output(const std::string& address, unsigned int port)
+{
+	m_udpAddress = CUDPSocket::lookup(address);
+	if (m_udpAddress.s_addr == INADDR_NONE)
+		return false;
+
+	m_udpPort = port;
+
+	m_socket = new CUDPSocket;
+
+	bool ret = m_socket->open();
+	if (!ret) {
+		delete m_socket;
+		return false;
+	}
+
+	return true;
 }
 
 void CYSFRX::run()
@@ -113,6 +147,11 @@ void CYSFRX::run()
 	}
 
 	dv4mini.close();
+
+	if (m_socket != NULL) {
+		m_socket->close();
+		delete m_socket;
+	}
 }
 
 void CYSFRX::decode(const unsigned char* data, unsigned int length)
@@ -186,6 +225,8 @@ void CYSFRX::processBit(bool b)
 					payload.processVDMode1Data(m_buffer, fn);
 					unsigned int errors = payload.processVDMode1Audio(m_buffer);
 					LogMessage("YSF, V/D Mode 1, BER=%.1f%%", float(errors) / 2.35F);
+					if (m_socket != NULL)
+						writeVD1(m_buffer);
 				}
 				break;
 
@@ -193,7 +234,9 @@ void CYSFRX::processBit(bool b)
 					payload.processVDMode2Data(m_buffer, fn);
 					unsigned int errors = payload.processVDMode2Audio(m_buffer);
 					LogMessage("YSF, V/D Mode 2, BER=%.1f%%", float(errors) / 1.35F);
-				}
+					if (m_socket != NULL)
+						writeVD2(m_buffer);
+			    }
 				break;
 
 			case YSF_DT_DATA_FR_MODE:
@@ -226,4 +269,26 @@ void CYSFRX::processBit(bool b)
 		LogMessage("Signal lost");
 		m_receiving = false;
 	}
+}
+
+void CYSFRX::writeVD1(const unsigned char* buffer)
+{
+	unsigned char ambe[45U];
+
+	for (unsigned int i = 0U; i < 9U; i++) {
+		ambe[i + 0U]  = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 9U];
+		ambe[i + 9U]  = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 27U];
+		ambe[i + 18U] = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 45U];
+		ambe[i + 27U] = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 63U];
+		ambe[i + 36U] = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 81U];
+	}
+
+	m_socket->write(ambe, 45U, m_udpAddress, m_udpPort);
+}
+
+void CYSFRX::writeVD2(const unsigned char* buffer)
+{
+	unsigned char ambe[45U];
+
+	m_socket->write(ambe, 45U, m_udpAddress, m_udpPort);
 }

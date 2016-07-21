@@ -19,6 +19,8 @@
 #if !defined(YSFRX_H)
 #define	YSFRX_H
 
+#include "UDPSocket.h"
+
 #include <string>
 
 #include <cstdint>
@@ -28,11 +30,16 @@ public:
 	CYSFRX(const std::string& port, unsigned int frequency);
 	~CYSFRX();
 
+	bool output(const std::string& address, unsigned int port);
+
 	void run();
 
 private:
 	std::string  m_port;
 	unsigned int m_frequency;
+	in_addr      m_udpAddress;
+	unsigned int m_udpPort;
+	CUDPSocket*  m_socket;
 	uint64_t     m_bits;
 	unsigned int m_count;
 	unsigned int m_pos;
@@ -41,6 +48,9 @@ private:
 
 	void decode(const unsigned char* data, unsigned int length);
 	void processBit(bool b);
+
+	void writeVD1(const unsigned char* buffer);
+	void writeVD2(const unsigned char* buffer);
 };
 
 #endif

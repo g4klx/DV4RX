@@ -19,6 +19,8 @@
 #if !defined(DSTARRX_H)
 #define	DSTARRX_H
 
+#include "UDPSocket.h"
+
 #include <string>
 
 #include <cstdint>
@@ -34,11 +36,16 @@ public:
 	CDStarRX(const std::string& port, unsigned int frequency);
 	~CDStarRX();
 
+	bool output(const std::string& address, unsigned int port);
+
 	void run();
 
 private:
 	std::string  m_port;
 	unsigned int m_frequency;
+	in_addr      m_udpAddress;
+	unsigned int m_udpPort;
+	CUDPSocket*  m_socket;
 	uint32_t     m_bits;
 	unsigned int m_count;
 	unsigned int m_pos;
