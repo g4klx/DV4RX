@@ -37,7 +37,7 @@ public:
 	CDMRRX(const std::string& port, unsigned int frequency);
 	~CDMRRX();
 
-	bool output(const std::string& address, unsigned int port);
+	bool output(const std::string& address, unsigned int port, unsigned int slot);
 
 	void run();
 
@@ -46,6 +46,7 @@ private:
 	unsigned int   m_frequency;
 	in_addr        m_udpAddress;
 	unsigned int   m_udpPort;
+	unsigned int   m_udpSlot;
 	CUDPSocket*    m_socket;
 	uint64_t       m_bits;
 	unsigned int   m_count;
