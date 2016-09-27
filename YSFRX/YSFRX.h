@@ -51,6 +51,7 @@ private:
 
 	void writeVD1(const unsigned char* buffer);
 	void writeVD2(const unsigned char* buffer);
+	void writeFR(const unsigned char* buffer);
 };
 
 #endif

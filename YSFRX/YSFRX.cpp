@@ -249,6 +249,8 @@ void CYSFRX::processBit(bool b)
 				} else {
 					unsigned int errors = payload.processVoiceFRModeAudio(m_buffer);
 					LogMessage("YSF, V Mode 3, BER=%.1f%%", float(errors) / 7.2F);
+					if (m_socket != NULL)
+						writeFR(m_buffer);
 				}
 				break;
 
@@ -275,20 +277,29 @@ void CYSFRX::writeVD1(const unsigned char* buffer)
 {
 	unsigned char ambe[45U];
 
-	for (unsigned int i = 0U; i < 9U; i++) {
-		ambe[i + 0U]  = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 9U];
-		ambe[i + 9U]  = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 27U];
-		ambe[i + 18U] = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 45U];
-		ambe[i + 27U] = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 63U];
-		ambe[i + 36U] = buffer[YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + i + 81U];
-	}
+	::memcpy(ambe + 0U,  buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 9U,  9U);
+	::memcpy(ambe + 9U,  buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 27U, 9U);
+	::memcpy(ambe + 18U, buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 45U, 9U);
+	::memcpy(ambe + 27U, buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 63U, 9U);
+	::memcpy(ambe + 36U, buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 81U, 9U);
 
 	m_socket->write(ambe, 45U, m_udpAddress, m_udpPort);
 }
 
 void CYSFRX::writeVD2(const unsigned char* buffer)
 {
-	unsigned char ambe[45U];
+	unsigned char ambe[65U];
 
-	m_socket->write(ambe, 45U, m_udpAddress, m_udpPort);
+	::memcpy(ambe + 0U,  buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 5U,  13U);
+	::memcpy(ambe + 13U, buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 23U, 13U);
+	::memcpy(ambe + 26U, buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 41U, 13U);
+	::memcpy(ambe + 39U, buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 59U, 13U);
+	::memcpy(ambe + 52U, buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES + 77U, 13U);
+
+	m_socket->write(ambe, 65U, m_udpAddress, m_udpPort);
+}
+
+void CYSFRX::writeFR(const unsigned char* buffer)
+{
+	m_socket->write(buffer + YSF_SYNC_LENGTH_BYTES + YSF_FICH_LENGTH_BYTES, 90U, m_udpAddress, m_udpPort);
 }
