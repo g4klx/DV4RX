@@ -60,8 +60,10 @@ const unsigned char BIT_MASK_TABLE[] = {0x80U, 0x40U, 0x20U, 0x10U, 0x08U, 0x04U
 #define WRITE_BIT(p,i,b) p[(i)>>3] = (b) ? (p[(i)>>3] | BIT_MASK_TABLE[(i)&7]) : (p[(i)>>3] & ~BIT_MASK_TABLE[(i)&7])
 #define READ_BIT(p,i)    (p[(i)>>3] & BIT_MASK_TABLE[(i)&7])
 
-const uint64_t AUDIO_SYNC = 0x755FD7DF75F7U;
-const uint64_t DATA_SYNC  = 0xDFF57D75DF5DU;
+const uint64_t AUDIO_SYNC_RPT = 0x755FD7DF75F7U;
+const uint64_t DATA_SYNC_RPT  = 0xDFF57D75DF5DU;
+const uint64_t AUDIO_SYNC_DMO = 0x7F7D5DD57DFDU;
+const uint64_t DATA_SYNC_DMO  = 0xD5D7F77FD757U;
 
 const uint64_t SYNC_MASK  = 0xFFFFFFFFFFFFU;
 
@@ -72,20 +74,46 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (argc != 3 && argc != 6) {
-		::fprintf(stderr, "Usage: DMRRX [-v|--version] <port> <frequency> [<address> <port> <slot>]\n");
+	if (argc != 3 && argc != 4 && argc != 6 && argc != 7) {
+		::fprintf(stderr, "Usage: DMRRX [-v|--version|--dmo] <port> <frequency> [<address> <port> <slot>]\n");
 		return 1;
 	}
 
-	std::string port = std::string(argv[1U]);
-	unsigned int frequency = ::atoi(argv[2U]);
+    bool dmo = false;
+    std::string port;
+    unsigned int frequency = 0U;
 
-	CDMRRX rx(port, frequency);
+    if (argc == 4 || argc == 7) {
+        if (::strcmp(argv[1U], "--dmo") != 0) {
+            ::fprintf(stderr, "DMRRX: invalid option - %s\n", argv[1U]);
+            return 1;
+        }
 
-	if (argc == 6) {
-		std::string address = std::string(argv[3U]);
-		unsigned int port = ::atoi(argv[4U]);
-		unsigned int slot = ::atoi(argv[5]);
+        port = std::string(argv[2U]);
+        frequency = ::atoi(argv[3U]);
+        dmo = true;
+    } else {
+        port = std::string(argv[1U]);
+        frequency = ::atoi(argv[2U]);
+        dmo = false;
+    }
+
+	CDMRRX rx(port, frequency, dmo);
+
+	if (argc == 6 || argc == 7) {
+        std::string address;
+        unsigned int port;
+        unsigned int slot;
+
+        if (argc == 6) {
+            address = std::string(argv[3U]);
+            port = ::atoi(argv[4U]);
+            slot = ::atoi(argv[5U]);
+        } else {
+            address = std::string(argv[4U]);
+            port = ::atoi(argv[5U]);
+            slot = ::atoi(argv[6U]);
+        }
 
 		bool ret = rx.output(address, port, slot);
 		if (!ret) {
@@ -103,9 +131,10 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-CDMRRX::CDMRRX(const std::string& port, unsigned int frequency) :
+CDMRRX::CDMRRX(const std::string& port, unsigned int frequency, bool dmo) :
 m_port(port),
 m_frequency(frequency),
+m_dmo(dmo),
 m_udpAddress(),
 m_udpPort(0U),
 m_udpSlot(0U),
@@ -197,7 +226,11 @@ void CDMRRX::decode(const unsigned char* data, unsigned int length)
 		if (b)
 			m_bits |= 0x01U;
 
-		uint64_t v = (m_bits & SYNC_MASK) ^ DATA_SYNC;
+		uint64_t v;
+        if (m_dmo)
+            v = (m_bits & SYNC_MASK) ^ DATA_SYNC_DMO;
+        else
+            v = (m_bits & SYNC_MASK) ^ DATA_SYNC_RPT;
 
 		unsigned int errs = 0U;
 		while (v != 0U) {
@@ -212,7 +245,10 @@ void CDMRRX::decode(const unsigned char* data, unsigned int length)
 			m_receiving = true;
 		}
 
-		v = (m_bits & SYNC_MASK) ^ AUDIO_SYNC;
+        if (m_dmo)
+            v = (m_bits & SYNC_MASK) ^ AUDIO_SYNC_DMO;
+        else
+    		v = (m_bits & SYNC_MASK) ^ AUDIO_SYNC_RPT;
 
 		errs = 0U;
 		while (v != 0U) {

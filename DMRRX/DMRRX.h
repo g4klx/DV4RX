@@ -1,5 +1,5 @@
 /*
-*   Copyright (C) 2016 by Jonathan Naylor G4KLX
+*   Copyright (C) 2016,2017 by Jonathan Naylor G4KLX
 *
 *   This program is free software; you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ enum SYNC_TYPE {
 
 class CDMRRX {
 public:
-	CDMRRX(const std::string& port, unsigned int frequency);
+	CDMRRX(const std::string& port, unsigned int frequency, bool dmo);
 	~CDMRRX();
 
 	bool output(const std::string& address, unsigned int port, unsigned int slot);
@@ -44,6 +44,7 @@ public:
 private:
 	std::string    m_port;
 	unsigned int   m_frequency;
+    bool           m_dmo;
 	in_addr        m_udpAddress;
 	unsigned int   m_udpPort;
 	unsigned int   m_udpSlot;
