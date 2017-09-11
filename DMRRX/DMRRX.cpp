@@ -1,5 +1,5 @@
 /*
-*   Copyright (C) 2016 by Jonathan Naylor G4KLX
+*   Copyright (C) 2016,2017 by Jonathan Naylor G4KLX
 *
 *   This program is free software; you can redistribute it and/or modify
 *   it under the terms of the GNU General Public License as published by
@@ -329,10 +329,28 @@ void CDMRRX::processDataSync(const unsigned char* buffer)
 	} else if (type == DT_CSBK) {
 		CDMRCSBK csbk;
 		bool valid = csbk.put(buffer);
-		if (valid)
-			LogMessage("%u [Data Sync] [CSBK] CC=%u src=%u dest=%s%u", m_slotNo, cc, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
-		else
-			LogMessage("%u [Data Sync] [CSBK] CC=%u invalid", m_slotNo, cc);
+        if (valid) {
+            CSBKO csbko = csbk.getCSBKO();
+            switch (csbko) {
+            case CSBKO_UUVREQ:
+                LogMessage("%u [Data Sync] [CSBK] [UUVREQ] CC=%u src=%u dest=%s%u", m_slotNo, cc, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
+                break;
+            case CSBKO_UUANSRSP:
+                LogMessage("%u [Data Sync] [CSBK] [UUANSRSP] CC=%u src=%u dest=%s%u", m_slotNo, cc, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
+                break;
+            case CSBKO_NACKRSP:
+                LogMessage("%u [Data Sync] [CSBK] [NACKRSP] CC=%u src=%u dest=%s%u", m_slotNo, cc, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId());
+                break;
+            case CSBKO_PRECCSBK:
+                LogMessage("%u [Data Sync] [CSBK] [PRECCSBK] CC=%u src=%u dest=%s%u DETAILS: %s:%u", m_slotNo, cc, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId(), csbk.getDataContent() ? "Data" : "CSBK", csbk.getCBF());
+                break;
+            default:
+                LogMessage("%u [Data Sync] [CSBK] [UNKNOWN] CC=%u src=%u dest=%s%u CSBKO: %02X", m_slotNo, cc, csbk.getSrcId(), csbk.getGI() ? "TG" : "", csbk.getDstId(), csbko);
+                break;
+            }
+        } else {
+            LogMessage("%u [Data Sync] [CSBK] CC=%u invalid", m_slotNo, cc);
+        }
 	} else {
 		LogMessage("%u [Data Sync] [UNKNOWN] CC=%u type=%u", m_slotNo, cc, type);
 	}
